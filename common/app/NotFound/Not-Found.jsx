@@ -1,23 +1,31 @@
-import React, { PropTypes } from 'react';
-import { connect } from 'react-redux';
-import { hardGoTo } from '../redux';
+import React from 'react';
+// import PropTypes from 'prop-types';
+import {
+  Alert,
+  Button
+} from 'react-bootstrap';
 
-const propTypes = {
-  hardGoTo: PropTypes.func,
-  location: PropTypes.object
-};
+const propTypes = {};
 
-export class NotFound extends React.Component {
-  componentWillMount() {
-    this.props.hardGoTo(this.props.location.pathname);
-  }
-
-  render() {
-    return <span />;
-  }
+export default function NotFound() {
+  return (
+    <div className='not-found'>
+      <Alert bsStyle='info'>
+        <p>
+          { 'Sorry, we couldn\'t find a page for that address.' }
+        </p>
+      </Alert>
+      <a href={'/map'}>
+        <Button
+          bsSize='lg'
+          bsStyle='primary'
+          >
+          Take me to the Challenges
+        </Button>
+      </a>
+    </div>
+  );
 }
 
 NotFound.displayName = 'NotFound';
 NotFound.propTypes = propTypes;
-
-export default connect(null, { hardGoTo })(NotFound);

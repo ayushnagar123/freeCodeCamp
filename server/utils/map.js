@@ -2,7 +2,6 @@ import _ from 'lodash';
 import { Observable } from 'rx';
 
 import { unDasherize, nameify } from '../utils';
-import supportedLanguages from '../../common/utils/supported-languages';
 import {
   addNameIdMap as _addNameIdToMap,
   checkMapData,
@@ -33,7 +32,8 @@ const getFirstChallenge = _.once(_getFirstChallenge);
  */
 export function _cachedMap({ Block, Challenge }) {
   const challenges = Challenge.find$({
-    order: [ 'order ASC', 'suborder ASC' ]
+    order: [ 'order ASC', 'suborder ASC' ],
+    where: { isPrivate: false }
   });
   const challengeMap = challenges
     .map(
@@ -44,7 +44,10 @@ export function _cachedMap({ Block, Challenge }) {
           return hash;
         }, {})
     );
-  const blocks = Block.find$({ order: [ 'superOrder ASC', 'order ASC' ] });
+  const blocks = Block.find$({
+    order: [ 'superOrder ASC', 'order ASC' ],
+    where: { isPrivate: false }
+  });
   const blockMap = Observable.combineLatest(
     blocks.map(
       blocks => blocks
@@ -114,42 +117,6 @@ export function _cachedMap({ Block, Challenge }) {
 
 export const cachedMap = _.once(_cachedMap);
 
-export function mapChallengeToLang(
-  { translations = {}, ...challenge },
-  lang
-) {
-  if (!supportedLanguages[lang]) {
-    lang = 'en';
-  }
-  const translation = translations[lang] || {};
-  const isTranslated = Object.keys(translation).length > 0;
-  if (lang !== 'en') {
-    challenge = {
-      ...challenge,
-      ...translation,
-      isTranslated
-    };
-  }
-  return {
-    ...challenge,
-    isTranslated
-  };
-}
-
-export function getMapForLang(lang) {
-  return ({ entities: { challenge: challengeMap, ...entities }, result }) => {
-    entities.challenge = Object.keys(challengeMap)
-      .reduce((translatedChallengeMap, key) => {
-        translatedChallengeMap[key] = mapChallengeToLang(
-          challengeMap[key],
-          lang
-        );
-        return translatedChallengeMap;
-      }, {});
-    return { result, entities };
-  };
-}
-
 // type ObjectId: String;
 // getChallengeById(
 //   map: Observable[map],
@@ -204,11 +171,10 @@ function loadComingSoonOrBetaChallenge({
 export function getChallenge(
   challengeDashedName,
   blockDashedName,
-  map,
-  lang
-) {
+  map) {
   return map
     .flatMap(({ entities, result: { superBlocks } }) => {
+      const superBlock = entities.superBlock;
       const block = entities.block[blockDashedName];
       const challenge = entities.challenge[challengeDashedName];
       return Observable.if(
@@ -226,8 +192,9 @@ export function getChallenge(
             `/challenges/${block.dashedName}/${challenge.dashedName}` :
             false,
           entities: {
+            superBlock,
             challenge: {
-              [challenge.dashedName]: mapChallengeToLang(challenge, lang)
+              [challenge.dashedName]: challenge
             }
           },
           result: {

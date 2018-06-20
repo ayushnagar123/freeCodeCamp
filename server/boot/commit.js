@@ -82,7 +82,7 @@ export default function commit(app) {
   );
 
   app.use(api);
-  app.use('/:lang', router);
+  app.use(router);
 
   function commitToNonprofit(req, res, next) {
     const { user } = req;
@@ -103,14 +103,15 @@ export default function commit(app) {
         pledge => {
           if (pledge) {
             debug('found previous pledge');
-            req.flash('info', {
-              msg: dedent`
+            req.flash(
+              'info',
+              dedent`
                 Looks like you already have a pledge to ${pledge.displayName}.
                 Clicking "Commit" here will replace your old commitment. If you
                 do change your commitment, please remember to cancel your
                 previous recurring donation directly with ${pledge.displayName}.
               `
-            });
+            );
           }
           res.render(
             'commit/',
@@ -132,7 +133,7 @@ export default function commit(app) {
     const {
       nonprofit: nonprofitName = 'girl develop it',
       amount = '5',
-      goal = commitGoals.frontEndCert
+      goal = commitGoals.respWebDesignCert
     } = req.query;
 
     const nonprofit = findNonprofit(nonprofitName);
@@ -165,14 +166,15 @@ export default function commit(app) {
       })
       .subscribe(
         ({ displayName, goal, amount }) => {
-          req.flash('success', {
-            msg: dedent`
+          req.flash(
+            'success',
+            dedent`
               Congratulations, you have committed to giving
               ${displayName} $${amount} each month until you have completed
               your ${goal}. Please remember to cancel your pledge directly
               with ${displayName} once you finish.
             `
-          });
+          );
           res.redirect('/' + user.username);
         },
         next
@@ -229,7 +231,7 @@ export default function commit(app) {
               there's no pledge to stop.
             `;
           }
-          req.flash('info', { msg });
+          req.flash('info', msg);
           return res.redirect(`/${user.username}`);
         },
         next

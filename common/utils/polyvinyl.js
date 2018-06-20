@@ -5,11 +5,11 @@ import castToObservable from '../app/utils/cast-to-observable.js';
 
 
 // createFileStream(
-//   files: Dictionary[Path, PolyVinyl]
+//   files: [...PolyVinyl]
 // ) => Observable[...Observable[...PolyVinyl]]
-export function createFileStream(files = {}) {
+export function createFileStream(files = []) {
   return Observable.of(
-    Observable.from(Object.keys(files).map(key => files[key]))
+    Observable.from(files)
   );
 }
 
@@ -116,7 +116,7 @@ export function setContent(contents, poly) {
   };
 }
 
-// setExt(contents: String, poly: PolyVinyl) => PolyVinyl
+// setExt(ext: String, poly: PolyVinyl) => PolyVinyl
 export function setExt(ext, poly) {
   checkPoly(poly);
   const newPoly = {
@@ -129,7 +129,7 @@ export function setExt(ext, poly) {
   return newPoly;
 }
 
-// setName(contents: String, poly: PolyVinyl) => PolyVinyl
+// setName(name: String, poly: PolyVinyl) => PolyVinyl
 export function setName(name, poly) {
   checkPoly(poly);
   const newPoly = {
@@ -142,7 +142,7 @@ export function setName(name, poly) {
   return newPoly;
 }
 
-// setError(contents: String, poly: PolyVinyl) => PolyVinyl
+// setError(error: Object, poly: PolyVinyl) => PolyVinyl
 export function setError(error, poly) {
   invariant(
     typeof error === 'object',
@@ -166,10 +166,19 @@ export function clearHeadTail(poly) {
   };
 }
 
-// compileHeadTail(contents: String, poly: PolyVinyl) => PolyVinyl
+// appendToTail (tail: String, poly: PolyVinyl) => PolyVinyl
+export function appendToTail(tail, poly) {
+  checkPoly(poly);
+  return {
+    ...poly,
+    tail: poly.tail.concat(tail)
+  };
+}
+
+// compileHeadTail(padding: String, poly: PolyVinyl) => PolyVinyl
 export function compileHeadTail(padding = '', poly) {
-  return clearHeadTail(setContent(
-    [ poly.head, poly.contents, poly.tail ].join(padding),
+  return clearHeadTail(transformContents(
+    () => [ poly.head, poly.contents, poly.tail ].join(padding),
     poly
   ));
 }
@@ -188,7 +197,7 @@ export function transformContents(wrap, poly) {
     poly
   );
   // if no source exist, set the original contents as source
-  newPoly.source = poly.contents || poly.contents;
+  newPoly.source = poly.source || poly.contents;
   return newPoly;
 }
 
@@ -198,11 +207,19 @@ export function transformContents(wrap, poly) {
 // ) => PolyVinyl
 export function transformHeadTailAndContents(wrap, poly) {
   return {
-    ...setContent(
-      wrap(poly.contents),
+    ...transformContents(
+      wrap,
       poly
     ),
     head: wrap(poly.head),
     tail: wrap(poly.tail)
   };
+}
+
+export function testContents(predicate, poly) {
+  return !!predicate(poly.contents);
+}
+
+export function updateFileFromSpec(spec, poly) {
+  return setContent(poly.contents, createPoly(spec));
 }

@@ -1,23 +1,46 @@
-import { createTypes } from 'redux-create-types';
-import { createAction, handleActions } from 'redux-actions';
+import { findIndex, property, merge } from 'lodash';
+import uuid from 'uuid/v4';
+import {
+  composeReducers,
+  createAction,
+  createTypes,
+  handleActions
+} from 'berkeleys-redux-utils';
+
+import { themes } from '../../utils/themes';
+import { usernameSelector } from '../redux';
+import { types as map } from '../Map/redux';
+import legacyProjects from '../../utils/legacyProjectData';
 
 export const ns = 'entities';
 export const getNS = state => state[ns];
 export const entitiesSelector = getNS;
 export const types = createTypes([
-  'updateUserPoints',
+  'addPortfolioItem',
+  'optoUpdatePortfolio',
+  'regresPortfolio',
+  'resetFullBlocks',
+  'updateLocalProfileUI',
+  'updateMultipleUserFlags',
+  'updateTheme',
   'updateUserFlag',
   'updateUserEmail',
   'updateUserLang',
-  'updateUserChallenge',
   'updateUserCurrentChallenge'
 ], ns);
 
-// updateUserPoints(username: String, points: Number) => Action
-export const updateUserPoints = createAction(
-  types.updateUserPoints,
-  (username, points) => ({ username, points })
+// addPortfolioItem(...PortfolioItem) => Action
+export const addPortfolioItem = createAction(types.addPortfolioItem);
+// optoUpdatePortfolio(...PortfolioItem) => Action
+export const optoUpdatePortfolio = createAction(types.optoUpdatePortfolio);
+// regresPortfolio(id: String) => Action
+export const regresPortfolio = createAction(types.regresPortfolio);
+
+// updateMultipleUserFlags({ username: String, flags: { String }) => Action
+export const updateMultipleUserFlags = createAction(
+  types.updateMultipleUserFlags
 );
+
 // updateUserFlag(username: String, flag: String) => Action
 export const updateUserFlag = createAction(
   types.updateUserFlag,
@@ -25,7 +48,7 @@ export const updateUserFlag = createAction(
 );
 // updateUserEmail(username: String, email: String) => Action
 export const updateUserEmail = createAction(
-  types.updateUserFlag,
+  types.updateUserEmail,
   (username, email) => ({ username, email })
 );
 // updateUserLang(username: String, lang: String) => Action
@@ -34,34 +57,108 @@ export const updateUserLang = createAction(
   (username, lang) => ({ username, languageTag: lang })
 );
 
-// updateUserChallenge(
-//   username: String,
-//   challengeInfo: Object
-// ) => Action
-export const updateUserChallenge = createAction(
-  types.updateUserChallenge,
-  (username, challengeInfo) => ({ username, challengeInfo })
-);
+export const updateLocalProfileUI = createAction(types.updateLocalProfileUI);
+
+export const resetFullBlocks = createAction(types.resetFullBlocks);
 
 export const updateUserCurrentChallenge = createAction(
   types.updateUserCurrentChallenge
 );
 
+// entity meta creators
+const getEntityAction = property('meta.entitiesAction');
 
-const initialState = {
+export const updateThemeMetacreator = (username, theme) => ({
+  entitiesAction: {
+    type: types.updateTheme,
+    payload: {
+      username,
+      theme: !theme || theme === themes.default ? themes.default : themes.night
+    }
+  }
+});
+
+export function emptyPortfolio() {
+  return {
+  id: uuid(),
+  title: '',
+  description: '',
+  url: '',
+  image: ''
+  };
+}
+
+const defaultState = {
   superBlock: {},
   block: {},
   challenge: {},
-  user: {}
+  user: {},
+  fullBlocks: []
 };
 
+export function portfolioSelector(state, props) {
+  const username = usernameSelector(state);
+  const { portfolio } = getNS(state).user[username];
+  const pIndex = findIndex(portfolio, p => p.id === props.id);
+  return portfolio[pIndex];
+}
+
+export function projectsSelector(state) {
+  const {
+    block: blocks,
+    challenge: challengeMap
+  } = getNS(state);
+  const idToNameMap = challengeIdToNameMapSelector(state);
+  const legacyWithDashedNames = legacyProjects
+    .reduce((list, current) => ([
+      ...list,
+      {
+        ...current,
+        challenges: current.challenges.map(id => idToNameMap[id])
+      }
+    ]),
+    []
+  );
+  return Object.keys(blocks)
+    .filter(key =>
+      key.includes('projects') && !(
+        key.includes('coding-interview') || key.includes('take-home')
+      )
+    )
+    .map(key => blocks[key])
+    .concat(legacyWithDashedNames)
+    .map(({ title, challenges, superBlock }) => {
+      const projectChallengeDashNames = challenges
+        // challengeIdToName is not available on appMount
+        .filter(Boolean)
+        // remove any project intros
+        .filter(chal => !chal.includes('get-set-for'));
+      const projectChallenges = projectChallengeDashNames
+        .map(dashedName => {
+          const { id, title } = challengeMap[dashedName];
+          return { id, title, dashedName };
+        });
+      return {
+        projectBlockName: title,
+        superBlock,
+        challenges: projectChallenges
+      };
+    });
+}
+
+export function challengeIdToNameMapSelector(state) {
+  return getNS(state).challengeIdToName || {};
+}
+
 export const challengeMapSelector = state => getNS(state).challenge || {};
+
 export function makeBlockSelector(block) {
   return state => {
     const blockMap = getNS(state).block || {};
     return blockMap[block] || {};
   };
 }
+
 export function makeSuperBlockSelector(name) {
   return state => {
     const superBlock = getNS(state).superBlock || {};
@@ -69,28 +166,122 @@ export function makeSuperBlockSelector(name) {
   };
 }
 
-export default function createReducer() {
-  const userReducer = handleActions(
-    {
-      [types.updateUserPoints]: (state, { payload: { username, points } }) => ({
+export const isChallengeLoaded = (state, { dashedName }) =>
+  !!challengeMapSelector(state)[dashedName];
+
+export const fullBlocksSelector = state => getNS(state).fullBlocks;
+
+export default composeReducers(
+  ns,
+  function metaReducer(state = defaultState, action) {
+    const { meta } = action;
+    if (meta && meta.entities) {
+      if (meta.entities.user) {
+        return {
+          ...state,
+          user: {
+            ...state.user,
+            ...meta.entities.user
+          }
+        };
+      }
+      return merge({}, state, action.meta.entities);
+    }
+    return state;
+  },
+  function entitiesReducer(state = defaultState, action) {
+    if (getEntityAction(action)) {
+      const { payload: { username, theme } } = getEntityAction(action);
+      return {
         ...state,
-        [username]: {
-          ...state[username],
-          points
+        user: {
+          ...state.user,
+          [username]: {
+            ...state.user[username],
+            theme
+          }
+        }
+      };
+    }
+    return state;
+  },
+  handleActions(
+    () => ({
+      [map.fetchMapUi.complete]: (state, { payload: { entities } }) =>
+        merge({}, state, entities),
+      [types.addPortfolioItem]: (state, { payload: username }) => ({
+        ...state,
+        user: {
+          ...state.user,
+          [username]: {
+            ...state.user[username],
+            portfolio: [
+              ...state.user[username].portfolio,
+              emptyPortfolio()
+            ]
+          }
+        }
+      }),
+      [types.optoUpdatePortfolio]: (
+        state,
+        { payload: { username, portfolio }}
+      ) => {
+        const currentPortfolio = state.user[username].portfolio.slice(0);
+        const pIndex = findIndex(currentPortfolio, p => p.id === portfolio.id);
+        const updatedPortfolio = currentPortfolio;
+        updatedPortfolio[pIndex] = portfolio;
+        return {
+          ...state,
+          user: {
+            ...state.user,
+            [username]: {
+              ...state.user[username],
+              portfolio: updatedPortfolio
+            }
+          }
+        };
+      },
+      [types.regresPortfolio]: (state, { payload: { username, id } }) => ({
+        ...state,
+        user: {
+          ...state.user,
+          [username]: {
+            ...state.user[username],
+            portfolio: state.user[username].portfolio.filter(p => p.id !== id)
+          }
+        }
+      }),
+      [types.updateMultipleUserFlags]: (
+        state,
+        { payload: { username, flags }}
+      ) => ({
+        ...state,
+        user: {
+          ...state.user,
+          [username]: {
+            ...state.user[username],
+            ...flags
+          }
         }
       }),
       [types.updateUserFlag]: (state, { payload: { username, flag } }) => ({
         ...state,
-        [username]: {
-          ...state[username],
-          [flag]: !state[username][flag]
+        user: {
+          ...state.user,
+          [username]: {
+            ...state.user[username],
+            [flag]: !state.user[username][flag]
+          }
         }
       }),
       [types.updateUserEmail]: (state, { payload: { username, email } }) => ({
         ...state,
-        [username]: {
-          ...state[username],
-          email
+        user: {
+          ...state.user,
+          [username]: {
+            ...state.user[username],
+            email
+          }
         }
       }),
       [types.updateUserLang]:
@@ -101,63 +292,32 @@ export default function createReducer() {
         }
       ) => ({
         ...state,
-        [username]: {
-          ...state[username],
-          languageTag
+        user: {
+          ...state.user,
+          [username]: {
+            ...state.user[username],
+            languageTag
+          }
         }
       }),
-      [types.updateUserCurrentChallenge]:
+      [types.updateLocalProfileUI]:
       (
         state,
-        {
-          payload: { username, currentChallengeId }
-        }
+        { payload: { username, profileUI } }
       ) => ({
         ...state,
-        [username]: {
-          ...state[username],
-          currentChallengeId
-        }
-      }),
-      [types.updateUserChallenge]:
-      (
-        state,
-        {
-          payload: { username, challengeInfo }
-        }
-      ) => ({
-        ...state,
-        [username]: {
-          ...state[username],
-          challengeMap: {
-            ...state[username].challengeMap,
-            [challengeInfo.id]: challengeInfo
+        user: {
+          ...state.user,
+          [username]: {
+            ...state.user[username],
+            profileUI: {
+              ...state.user[username].profileUI,
+              ...profileUI
+            }
           }
         }
       })
-    },
-    initialState.user
-  );
-
-  function metaReducer(state = initialState, action) {
-    if (action.meta && action.meta.entities) {
-      return {
-        ...state,
-        ...action.meta.entities
-      };
-    }
-    return state;
-  }
-
-  function entitiesReducer(state, action) {
-    const newState = metaReducer(state, action);
-    const user = userReducer(newState.user, action);
-    if (newState.user !== user) {
-      return { ...newState, user };
-    }
-    return newState;
-  }
-
-  entitiesReducer.toString = () => ns;
-  return entitiesReducer;
-}
+    }),
+    defaultState
+  )
+);

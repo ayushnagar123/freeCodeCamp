@@ -1,5 +1,5 @@
 const successRedirect = '/';
-const failureRedirect = '/signin';
+const failureRedirect = '/';
 const linkSuccessRedirect = '/settings';
 const linkFailureRedirect = '/settings';
 
@@ -11,7 +11,7 @@ export default {
     passwordField: 'password',
     authPath: '/auth/local',
     successRedirect: successRedirect,
-    failureRedirect: '/email-signin',
+    failureRedirect: failureRedirect,
     session: true,
     failureFlash: true
   },
@@ -109,6 +109,7 @@ export default {
     failureRedirect: failureRedirect,
     clientID: process.env.LINKEDIN_ID,
     clientSecret: process.env.LINKEDIN_SECRET,
+    profileFields: ['public-profile-url'],
     scope: ['r_basicprofile', 'r_emailaddress'],
     authOptions: {
       state: process.env.LINKEDIN_STATE
@@ -126,6 +127,7 @@ export default {
     failureRedirect: linkFailureRedirect,
     clientID: process.env.LINKEDIN_ID,
     clientSecret: process.env.LINKEDIN_SECRET,
+    profileFields: ['public-profile-url'],
     scope: ['r_basicprofile', 'r_emailaddress'],
     authOptions: {
       state: process.env.LINKEDIN_STATE
@@ -159,8 +161,25 @@ export default {
     clientSecret: process.env.GITHUB_SECRET,
     link: true,
     failureFlash: true,
-    successFlash: [ 'We\'ve updated your profile based ',
-                    'on your your GitHub account.'
-                  ].join('')
+    successFlash: [
+      'We\'ve updated your profile based ',
+      'on your your GitHub account.'
+    ].join('')
+  },
+  'auth0-login': {
+    provider: 'auth0',
+    module: 'passport-auth0',
+    clientID: process.env.AUTH0_CLIENT_ID,
+    clientSecret: process.env.AUTH0_CLIENT_SECRET,
+    domain: process.env.AUTH0_DOMAIN,
+    cookieDomain: 'freeCodeCamp.org',
+    callbackURL: '/auth/auth0/callback',
+    authPath: '/auth/auth0',
+    callbackPath: '/auth/auth0/callback',
+    useCustomCallback: true,
+    successRedirect: successRedirect,
+    failureRedirect: failureRedirect,
+    scope: ['openid email'],
+    failureFlash: true
   }
 };

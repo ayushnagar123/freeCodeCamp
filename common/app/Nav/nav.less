@@ -32,6 +32,9 @@
 .navbar-brand {
   padding-top: @navbar-logo-padding;
   padding-bottom: @navbar-logo-padding;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .nav-logo {
@@ -77,31 +80,10 @@ li.nav-avatar {
 
     > a {
       margin: 0;
-      padding: 0 @navbar-padding-horizontal 0 @navbar-padding-horizontal;
+      padding: 7.5px @navbar-padding-horizontal 7.5px @navbar-padding-horizontal;
     }
   }
 }
-
-.nav-username {
-  padding-right: @navbar-padding-horizontal;
-}
-
-.nav-points {
-  @media (min-width: @screen-sm-min) and (max-width: @screen-sm-max) {
-    padding: @navbar-padding-vertical 0 @navbar-padding-vertical 0;
-  }
-  @media (min-width: @screen-md-min) {
-    padding: @navbar-padding-vertical @navbar-padding-horizontal @navbar-padding-vertical 0;
-  }
-}
-
-.nav-picture {
-  margin-top: @navbar-logo-padding;
-  margin-bottom: @navbar-logo-padding;
-  height: @navbar-logo-height;
-  width: @navbar-logo-height;
-}
-
 .navbar-nav a {
   color: @body-bg;
   margin-top: -5px;
@@ -119,6 +101,14 @@ li.nav-avatar {
 
 .navbar-collapse {
   border-top: 0;
+}
+
+.divider-vertical {
+  height: 24px;
+  margin-top: 6px;
+  margin-bottom: 6px;
+  border-left: 0.25px solid #ffffff;
+  border-right: 0.25px solid #ffffff;
 }
 
 @media (max-width: @screen-xs-max) {
@@ -166,6 +156,28 @@ li.nav-avatar {
 }
 
 .night {
+  .nav-component-wrapper {
+    ::-webkit-input-placeholder {
+      color: @night-text-color;
+    }
+
+    ::-moz-placeholder {
+      color: @night-text-color;
+    }
+
+    ::-ms-placeholder {
+      color: @night-text-color;
+    }
+
+    ::placeholder {
+      color: @night-text-color;
+    }
+
+    .fcc_input {
+      background-color: @night-search-color;
+      color: @night-text-color;
+    }
+  }
   .navbar-default {
     .navbar-nav {
       & > li > a {
@@ -193,4 +205,141 @@ li.nav-avatar {
       border-color: #666;
     }
   }
+}
+
+@media (min-width: 768px) and (max-width: 860px) {
+  .navbar {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .navbar-right {
+    margin-right: 0;
+  }
+
+  .navbar-nav > li > a {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+}
+
+.nav-component {
+  display: flex;
+  align-items: center;
+
+  &.header{
+
+    .navbar-brand {
+      padding-left: 0px;
+    }
+
+  }
+
+  &.bins {
+    justify-content: center;
+
+    .nav {
+      display: flex;
+    }
+  }
+
+
+  &.nav-links {
+    justify-content: flex-end;
+  }
+
+  .fcc_searchBar {
+    width: auto;
+    flex-grow: 1;
+    ::-webkit-input-placeholder {
+      color: @input-color-placeholder;
+    }
+
+    ::-moz-placeholder {
+      color: @input-color-placeholder;
+    }
+
+    ::-ms-placeholder {
+      color: @input-color-placeholder;
+    }
+
+    ::placeholder {
+      color: @input-color-placeholder;
+    }
+
+    .ais-Hits {
+      background-color: white;
+      z-index: 5;
+    }
+  }
+  .navbar-header {
+    display: flex;
+    align-items: center;
+    width: 100%;
+  }
+}
+
+.medium-nav {
+  display: flex;
+  justify-content: space-between;
+
+  .bins {
+    justify-content: flex-end;
+
+  }
+}
+
+.small-nav {
+  display: flex;
+  justify-content: space-between;
+
+  .bins {
+    justify-content: flex-end;
+
+    .btn {
+      padding: 6px 4px;
+    }
+  }
+}
+
+.bins {
+
+  .disabled-button {
+    color: whitesmoke; 
+  }
+  .enabled-button {
+    color: black;
+  }
+
+  .btn {
+    border-color: @brand-primary;
+    background-color: white;
+
+    &:hover {
+      background-color: @brand-primary;
+    }
+
+  }
+
+}
+
+.collapse-row {
+  background-color: @brand-primary;
+
+  .dropdown-menu {
+
+    li a {
+      display: flex;
+      justify-content: center;
+      background-color: #eeeeee;
+      color: @brand-primary !important;
+
+      &:hover {
+        background-color: @brand-primary !important;
+        color: #eeeeee !important;
+      }
+    }
+
+  }
+
 }

@@ -1,33 +1,42 @@
 import { Observable } from 'rx';
-import { ofType } from 'redux-epic';
+import { ofType, combineEpics } from 'redux-epic';
+
+import { getJSON$ } from '../../utils/ajax-stream';
 import {
   types,
 
-  addUser,
-  updateThisUser,
+  fetchUserComplete,
+  fetchOtherUserComplete,
   createErrorObservable,
-  showSignIn,
-  updateTheme,
-  addThemeToBody
+  showSignIn
 } from './';
+import { userFound } from '../routes/Profile/redux';
 
-export default function getUserEpic(actions, { getState }, { services }) {
-  return actions::ofType(types.fetchUser)
+function getUserEpic(actions, _, { services }) {
+  return actions::ofType('' + types.fetchUser)
     .flatMap(() => {
       return services.readService$({ service: 'user' })
         .filter(({ entities, result }) => entities && !!result)
-        .flatMap(({ entities, result })=> {
-          const user = entities.user[result];
-          const isNightMode = user.theme === 'night';
-          const actions = [
-            addUser(entities),
-            updateThisUser(result),
-            isNightMode ? updateTheme(user.theme) : null,
-            isNightMode ? addThemeToBody(user.theme) : null
-          ];
-          return Observable.from(actions).filter(Boolean);
-        })
+        .map(fetchUserComplete)
         .defaultIfEmpty(showSignIn())
         .catch(createErrorObservable);
     });
 }
+
+function getOtherUserEpic(actions$) {
+  return actions$::ofType(types.fetchOtherUser.start)
+    .distinctUntilChanged()
+    .flatMap(({ payload: otherUser }) => {
+      return getJSON$(`/api/users/get-public-profile?username=${otherUser}`)
+        .flatMap(response => Observable.of(
+          fetchOtherUserComplete(response),
+          userFound(!!response.result)
+        ))
+        .catch(createErrorObservable);
+    });
+}
+
+export default combineEpics(
+  getUserEpic,
+  getOtherUserEpic
+);

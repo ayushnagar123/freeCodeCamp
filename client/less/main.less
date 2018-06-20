@@ -35,17 +35,53 @@ pre.wrappable {
   word-wrap: break-word;      /* IE 5+ */
 }
 
-//input[type=checkbox] {
-//  /* Double-sized Checkboxes */
-//  -ms-transform: scale(2); /* IE */
-//  -moz-transform: scale(2); /* FF */
-//  -webkit-transform: scale(2); /* Safari and Chrome */
-//  -o-transform: scale(2); /* Opera */
-//  padding: 10px;
-//}
+.checkbox label:after {
+  content: '';
+  display: table;
+  clear: both;
+}
+
+.checkbox .cr {
+  position: relative;
+  display: inline-block;
+  border: 1px solid #a9a9a9;
+  border-radius: .25em;
+  width: 1.3em;
+  height: 1.3em;
+  float: left;
+  margin-right: .5em;
+}
+
+.checkbox .cr .cr-icon {
+  position: absolute;
+  font-size: .8em;
+  line-height: 0;
+  top: 50%;
+  left: 15%;
+}
+
+.checkbox label input[type="checkbox"] {
+  display: none;
+}
+
+.checkbox label input[type="checkbox"]+.cr>.cr-icon {
+  opacity: 0;
+}
+
+.checkbox label input[type="checkbox"]:checked+.cr>.cr-icon {
+  opacity: 1;
+}
+
+.checkbox label input[type="checkbox"]:disabled+.cr {
+  opacity: .5;
+}
 
 .btn-group {
   border-color: @brand-primary;
+}
+
+.btn-group-vertical {
+  width: 100%;
 }
 
 .full-screen-body-background {
@@ -71,6 +107,16 @@ h1, h2, h3, h4, h5, h6, p, li {
 
 .alert {
   margin-top: 20px;
+}
+
+.not-found, .not-found .btn-primary {
+  display: grid;
+  margin: auto;
+  a:hover,
+  a:focus,
+  a:active {
+    text-decoration: none;
+  }
 }
 
 // Thumbnails
@@ -134,8 +180,26 @@ h1, h2, h3, h4, h5, h6, p, li {
 }
 
 .landing-icon {
-  height: 200px;
-  width: 200px;
+  height: 100px;
+  width: 100px;
+}
+
+p.stats {
+  font-size: 2rem;
+}
+
+.green-text {
+  color: #006400;
+}
+
+.more-button-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  div {
+    flex-grow: 1;
+  }
 }
 
 .completion-icon {
@@ -333,6 +397,10 @@ p {
   border-radius: 6px;
 }
 
+.btn-big.btn-primary[disabled] {
+  color: rgb(141, 139, 132)
+}
+
 .btn-bigger {
   font-size: 30px;
 }
@@ -500,7 +568,7 @@ form.update-email .btn{
   }
 }
 
-.challenge-list-header {
+.challenges-list-header {
   background-color: @brand-primary;
   color: @gray-lighter;
   font-size: 36px;
@@ -646,9 +714,18 @@ hr {
   padding-top: 5px;
 }
 
+.night .map-challenge-title.selectedChallenge, .map-challenge-title.selectedChallenge {
+  background-color:rgb(236, 234, 234);
+}
+
 .checklist-element {
   margin-left: -60px;
   margin-right: -20px;
+}
+
+.public-profile-img {
+  height: 200px;
+  width: 200px;
 }
 
 .profile-social-icons {
@@ -685,27 +762,6 @@ code {
 .gitter-chat-embed {
  z-index: 20000 !important;
 }
-
-.email-settings {
-  @media (max-width: 768px) {
-    text-align: center;
-  }
-}
-
-.toggle-btn-group {
-  float: right;
-  .btn[disabled] {
-    opacity: 1;
-  }
-  @media (max-width: 768px) {
-    float: none;
-    .btn-toggle {
-      margin-top: 10px;
-      margin-bottom: 20px;
-    }
-  }
-}
-
 
 //uncomment this to see the dimensions of all elements outlined in red
 //* {
@@ -820,7 +876,7 @@ code {
   color: @night-text-color;
   .btn-group,
   .text-success,
-  .challenge-list-header,
+  .challenges-list-header,
   .fcc-footer {
     background-color: @night-body-bg;
   }
@@ -830,6 +886,15 @@ code {
   .modal-dialog {
     .modal-content {
       background-color: @gray;
+      .btn-success,
+      .btn-danger {
+        background: #FFFFFF;
+      }
+      .btn-danger:hover,
+      .btn-danger:focus,
+      .btn-danger:active {
+        background: #d9534f !important;
+      }
     }
     .modal-header,
     .modal-footer {
@@ -922,9 +987,16 @@ and (max-width : 400px)  {
 // Account Modal Styles
 .modal-dialog {
   margin: 80px;
+  bottom: 48px;
 
   .modal-content {
     background-color: #f9f9f9;
+
+    .btn-success:hover,
+    .btn-success:focus,
+    .btn-success:active {
+      background: #457E86;
+    }
   }
 
   .modal-header .close {
@@ -976,9 +1048,15 @@ and (max-width : 400px)  {
   }
 }
 
+.full-size {
+  height: 100%;
+  width: 100%;
+}
+
 // surrounding downstream import with &{}
 // creates locally scoped imports
 // and prevents vaiables from overwriting each other
 &{ @import "./code-mirror.less"; }
 &{ @import "./toastr.less"; }
 &{ @import "../../common/index.less"; }
+&{ @import "./userHome.less"; }

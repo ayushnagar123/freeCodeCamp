@@ -1,17 +1,15 @@
 import capitalize from 'lodash/capitalize';
-import { createTypes } from 'redux-create-types';
-import { createAction, handleActions } from 'redux-actions';
 import noop from 'lodash/noop';
+import {
+  createAction,
+  createTypes,
+  handleActions
+} from 'berkeleys-redux-utils';
 
-import loadCurrentChallengeEpic from './load-current-challenge-epic.js';
-import binEpic from './bin-epic.js';
 import ns from '../ns.json';
-import { createEventMetaCreator } from '../../redux';
+import { createEventMetaCreator } from '../../analytics/index';
 
-export const epics = [
-  loadCurrentChallengeEpic,
-  binEpic
-];
+export const epics = [];
 
 export const types = createTypes([
   'clickOnLogo',
@@ -62,8 +60,8 @@ const initialState = {
 
 export const dropdownSelector = state => state[ns].isDropdownOpen;
 
-export default function createReducer() {
-  const reducer = handleActions({
+export default handleActions(
+  () => ({
     [types.closeDropdown]: state => ({
       ...state,
       isDropdownOpen: false
@@ -72,8 +70,7 @@ export default function createReducer() {
       ...state,
       isDropdownOpen: true
     })
-  }, initialState);
-
-  reducer.toString = () => ns;
-  return reducer;
-}
+  }),
+  initialState,
+  ns
+);

@@ -1,25 +1,27 @@
-import { createTypes } from 'redux-create-types';
-import { createAction, handleActions } from 'redux-actions';
+import {
+  createAction,
+  createAsyncTypes,
+  createTypes,
+  handleActions
+} from 'berkeleys-redux-utils';
 import { createSelector } from 'reselect';
-import identity from 'lodash/identity';
-import capitalize from 'lodash/capitalize';
-
-import selectChallengeEpic from './select-challenge-epic.js';
+import { capitalize, noop } from 'lodash';
 
 import * as utils from './utils.js';
-import ns from '../ns.json';
 import {
-  types as app,
   createEventMetaCreator
 } from '../../redux';
 
-export const epics = [
-  selectChallengeEpic
-];
+import fetchMapUiEpic from './fetch-map-ui-epic';
+
+const ns = 'map';
+
+export const epics = [ fetchMapUiEpic ];
 
 export const types = createTypes([
+  'onRouteMap',
   'initMap',
-
+  createAsyncTypes('fetchMapUi'),
   'toggleThisPanel',
 
   'isAllCollapsed',
@@ -31,13 +33,16 @@ export const types = createTypes([
 
 export const initMap = createAction(types.initMap);
 
+export const fetchMapUi = createAction(types.fetchMapUi.start);
+export const fetchMapUiComplete = createAction(types.fetchMapUi.complete);
+
 export const toggleThisPanel = createAction(types.toggleThisPanel);
 export const collapseAll = createAction(types.collapseAll);
 
 export const expandAll = createAction(types.expandAll);
 export const clickOnChallenge = createAction(
   types.clickOnChallenge,
-  identity,
+  noop,
   createEventMetaCreator({
     category: capitalize(ns),
     action: 'click',
@@ -63,67 +68,54 @@ export function makePanelOpenSelector(name) {
   );
 }
 
-export function makePanelHiddenSelector(name) {
-  return createSelector(
-    mapSelector,
-    mapUi => {
-      const node = utils.getNode(mapUi, name);
-      return node ? node.isHidden : false;
-    }
-  );
-}
 // interface Map{
 //   children: [...{
 //     name: (superBlock: String),
 //     isOpen: Boolean,
-//     isHidden: Boolean,
 //     children: [...{
 //       name: (blockName: String),
 //       isOpen: Boolean,
-//       isHidden: Boolean,
 //       children: [...{
 //         name: (challengeName: String),
-//         isHidden: Boolean
 //       }]
 //     }]
 //   }
 // }
-export default function createReducer() {
-  const reducer = handleActions(
-    {
-      [types.toggleThisPanel]: (state, { payload: name }) => {
-        return {
-          ...state,
-          mapUi: utils.toggleThisPanel(state.mapUi, name)
-        };
-      },
-      [types.collapseAll]: state => {
-        const mapUi = utils.collapseAllPanels(state.mapUi);
-        mapUi.isAllCollapsed = true;
-        return {
-          ...state,
-          mapUi
-        };
-      },
-      [types.expandAll]: state => {
-        const mapUi = utils.expandAllPanels(state.mapUi);
-        mapUi.isAllCollapsed = false;
-        return {
-          ...state,
-          mapUi
-        };
-      },
-      [app.fetchChallenges.complete]: (state, { payload }) => {
-        const { entities, result } = payload;
-        return {
-          ...state,
-          mapUi: utils.createMapUi(entities, result)
-        };
-      }
+export default handleActions(
+  ()=> ({
+    [types.toggleThisPanel]: (state, { payload: name }) => {
+      return {
+        ...state,
+        mapUi: utils.toggleThisPanel(state.mapUi, name)
+      };
     },
-    initialState
-  );
+    [types.collapseAll]: state => {
+      const mapUi = utils.collapseAllPanels(state.mapUi);
+      mapUi.isAllCollapsed = true;
+      return {
+        ...state,
+        mapUi
+      };
+    },
+    [types.expandAll]: state => {
+      const mapUi = utils.expandAllPanels(state.mapUi);
+      mapUi.isAllCollapsed = false;
+      return {
+        ...state,
+        mapUi
+      };
+    },
+    [types.fetchMapUi.complete]: (state, { payload }) => {
+      const { entities, result, initialNode } = payload;
+      const mapUi = utils.createMapUi(entities, result);
+      return {
+        ...state,
+        ...result,
+        mapUi: utils.openPath(mapUi, initialNode)
+      };
+    }
+  }),
+  initialState,
+  ns
+);
 
-  reducer.toString = () => ns;
-  return reducer;
-}

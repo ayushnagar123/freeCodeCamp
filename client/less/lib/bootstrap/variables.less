@@ -14,6 +14,7 @@
 @gray:                   lighten(@gray-base, 33.5%); // #555
 @gray-light:             lighten(@gray-base, 46.7%); // #777
 @gray-lighter:           lighten(@gray-base, 93.5%); // #eee
+@silver-chalice:         lighten(@gray-base, 45%);   // #a6a6a6
 
 @brand-primary:         darkgreen;
 @brand-success:         #457E86;
@@ -41,7 +42,8 @@
 
 //## Night mode styles
 @night-body-bg:         @gray-dark;
-@night-text-color:            #ccc;
+@night-text-color:      #ccc;
+@night-search-color:    #044421;
 
 //== Typography
 //
@@ -326,7 +328,7 @@
 @grid-gutter-width:         30px;
 // Navbar collapse
 //** Point at which the navbar becomes uncollapsed.
-@grid-float-breakpoint:     @screen-sm-min;
+@grid-float-breakpoint:     955px;
 //** Point at which the navbar begins collapsing.
 @grid-float-breakpoint-max: (@grid-float-breakpoint - 1);
 
